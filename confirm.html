@@ -9,22 +9,13 @@
 
 <style>
 :root{
-  --bg:#020617;
-  --card:#ffffff;
+  --card:#fff;
   --text:#020617;
-  --muted:#6b7280;
   --border:#e5e7eb;
-
-  --approve:#16a34a;
-  --reject:#dc2626;
-  --initial:#f59e0b;
-
   --radius:16px;
   --shadow:0 30px 80px rgba(0,0,0,.25);
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:Inter,Arial,sans-serif;
@@ -35,61 +26,47 @@ body{
   justify-content:center;
   padding:32px;
 }
-
 .card{
   width:100%;
-  max-width:620px;
+  max-width:720px;
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   overflow:hidden;
 }
-
 .header{
   padding:22px 28px;
   background:linear-gradient(90deg,#020617,#7f1d1d);
   color:#fff;
   font-weight:800;
 }
-
-.body{
-  padding:34px;
-  color:var(--text);
-}
-
+.body{padding:34px}
 .notice{
+  padding:14px;
+  border-radius:12px;
   background:#fff7ed;
   color:#92400e;
-  padding:16px;
-  border-radius:12px;
   font-weight:600;
-  margin-bottom:22px;
+  margin-bottom:18px;
 }
-
+.notice.error{
+  background:#fef2f2;
+  color:#7f1d1d;
+}
 .table{
   width:100%;
   border-collapse:collapse;
-  margin-bottom:28px;
 }
-
 .table td{
-  padding:12px 0;
+  padding:12px;
   border-bottom:1px solid var(--border);
   font-size:14px;
 }
-
 .table td:first-child{
   font-weight:700;
-  color:#374151;
   width:45%;
 }
-
-.actions{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
+.actions{margin-top:26px}
 button{
   width:100%;
   padding:16px;
@@ -97,65 +74,50 @@ button{
   border:none;
   font-size:16px;
   font-weight:800;
-  cursor:pointer;
   color:#fff;
-  transition:.2s ease;
+  cursor:pointer;
 }
-
-button:disabled{
-  opacity:.7;
-  cursor:not-allowed;
-}
-
-.initial{background:linear-gradient(135deg,#fbbf24,#b45309)}
-.approve{background:linear-gradient(135deg,#16a34a,#15803d)}
-.reject{background:linear-gradient(135deg,#dc2626,#991b1b)}
-
+button.warn{background:linear-gradient(135deg,#f59e0b,#b45309)}
+button.approve{background:linear-gradient(135deg,#16a34a,#15803d)}
+button.reject{background:linear-gradient(135deg,#dc2626,#991b1b)}
+button + button{margin-top:12px}
+button:disabled{opacity:.7;cursor:not-allowed}
 .success{
   display:none;
-  margin-top:22px;
-  padding:18px;
-  border-radius:14px;
+  margin-top:20px;
+  padding:16px;
   background:#ecfdf5;
   color:#065f46;
+  border-radius:12px;
   font-weight:800;
   text-align:center;
+}
+.small{
+  margin-top:8px;
+  font-size:12px;
+  color:#6b7280;
 }
 </style>
 </head>
 
 <body>
-
 <div class="card">
   <div class="header">AW Collision — Expense Confirmation</div>
-
   <div class="body">
 
-    <div class="notice">
-      Please review the expense details and choose an action below.
+    <div id="notice" class="notice">
+      Please review the expense and choose an action below.
     </div>
 
     <table class="table">
-      <tr>
-        <td>Employee Name</td>
-        <td id="empName"></td>
-      </tr>
-      <tr>
-        <td>Expense Amount</td>
-        <td>$<span id="amount"></span></td>
-      </tr>
-      <tr>
-        <td>Expense ID</td>
-        <td id="expenseId"></td>
-      </tr>
-      <tr>
-        <td>Selected Action</td>
-        <td id="actionText"></td>
-      </tr>
+      <tr><td>Employee Name</td><td id="empName"></td></tr>
+      <tr><td>Expense Amount</td><td>$<span id="amount"></span></td></tr>
+      <tr><td>Expense ID</td><td id="expenseId"></td></tr>
+      <tr><td>Selected Action</td><td id="actionText">—</td></tr>
     </table>
 
     <div class="actions">
-      <button id="initialBtn" class="initial">Initial Approve</button>
+      <button id="initialBtn" class="warn">Initial Approve</button>
       <button id="approveBtn" class="approve">Approve</button>
       <button id="rejectBtn" class="reject">Reject</button>
     </div>
@@ -164,75 +126,97 @@ button:disabled{
       ✅ Action confirmed successfully.
     </div>
 
+    <div class="small">
+      If the buttons are disabled, please reopen the approval link from the email.
+    </div>
+
   </div>
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-
-const expenseId = params.get("expense_id");
-const token = params.get("token");
-const name = params.get("name") || "";
-const amount = params.get("amount") || "";
-const selectedAction = params.get("selected_action") || "—";
-
-const approveWebhook = params.get("approveWebhook");
-const rejectWebhook = params.get("rejectWebhook");
-const initialWebhook = params.get("initialWebhook");
-
-document.getElementById("empName").innerText = name;
-document.getElementById("amount").innerText = amount;
-document.getElementById("expenseId").innerText = expenseId;
-document.getElementById("actionText").innerText = selectedAction.toUpperCase();
-
-async function sendAction(action, webhook) {
-  if (!webhook) {
-    alert("Webhook not configured.");
-    return;
+/* helpers */
+function rawParam(name){
+  const rx = new RegExp('[?&]'+name+'=([^&]*)');
+  const m = window.location.search.match(rx);
+  return m ? m[1] : null;
+}
+function getParam(name){
+  try{
+    const p = new URLSearchParams(window.location.search).get(name);
+    if(p !== null) return p;
+  }catch(e){}
+  return rawParam(name);
+}
+function multiDecode(val,max=4){
+  if(!val) return val;
+  let cur=val;
+  for(let i=0;i<max;i++){
+    try{
+      const dec=decodeURIComponent(cur);
+      if(dec===cur) break;
+      cur=dec;
+    }catch(e){break;}
   }
+  return cur;
+}
+function normalizeWebhook(v){
+  if(!v) return null;
+  v=multiDecode(v,5).trim().replace(/^["']|["']$/g,'');
+  if(!/^https?:\/\//i.test(v)) v='https://'+v;
+  v=v.replace(/^(https?:\/\/)+/i,'https://');
+  try{ new URL(v); return v; }catch(e){ return null; }
+}
 
-  disableButtons();
+/* params */
+const expenseId=getParam('expense_id');
+const token=getParam('token');
+const name=multiDecode(getParam('name')||'—');
+const amount=multiDecode(getParam('amount')||'0.00');
+const selectedAction=getParam('selected_action');
 
-  try {
-    const res = await fetch("/.netlify/functions/forward", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        webhook,
-        payload: {
-          expense_id: expenseId,
-          action,
-          token,
-          name,
-          amount
-        }
-      })
+const approveWebhook=normalizeWebhook(getParam('approveWebhook'));
+const rejectWebhook=normalizeWebhook(getParam('rejectWebhook'));
+const initialWebhook=normalizeWebhook(getParam('initialWebhook'));
+
+/* populate */
+document.getElementById('empName').innerText=name;
+document.getElementById('amount').innerText=amount;
+document.getElementById('expenseId').innerText=expenseId||'—';
+if(selectedAction) document.getElementById('actionText').innerText=multiDecode(selectedAction).toUpperCase();
+
+/* validate */
+const notice=document.getElementById('notice');
+if(!expenseId||!token||!approveWebhook||!rejectWebhook||!initialWebhook){
+  notice.classList.add('error');
+  notice.innerText='Invalid or expired approval link. Please open from the original email.';
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+}
+
+/* forward */
+async function postViaForward(action,webhook,btn){
+  document.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const orig=btn.innerText;
+  btn.innerText='Processing...';
+  try{
+    const res=await fetch('/.netlify/functions/forward',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ webhook, expense_id:expenseId, action, token })
     });
-
-    if (!res.ok) throw new Error("Forward failed");
-
-    document.getElementById("successMsg").style.display = "block";
-  } catch (err) {
-    alert("Something went wrong. Please try again.");
-    console.error(err);
+    if(!res.ok) throw new Error('Forward failed');
+    document.getElementById('successMsg').style.display='block';
+    btn.innerText='Done';
+  }catch(e){
+    alert('Action failed. Please try again.');
+    document.querySelectorAll('button').forEach(b=>b.disabled=false);
+    btn.innerText=orig;
   }
 }
 
-function disableButtons(){
-  document.getElementById("initialBtn").disabled = true;
-  document.getElementById("approveBtn").disabled = true;
-  document.getElementById("rejectBtn").disabled = true;
-}
-
-document.getElementById("initialBtn").onclick = () =>
-  sendAction("InitialApprove", initialWebhook);
-
-document.getElementById("approveBtn").onclick = () =>
-  sendAction("Approve", approveWebhook);
-
-document.getElementById("rejectBtn").onclick = () =>
-  sendAction("Reject", rejectWebhook);
+/* bind */
+initialBtn.onclick=()=>postViaForward('initial_approve',initialWebhook,initialBtn);
+approveBtn.onclick=()=>postViaForward('approve',approveWebhook,approveBtn);
+rejectBtn.onclick=()=>postViaForward('reject',rejectWebhook,rejectBtn);
 </script>
-
 </body>
 </html>
