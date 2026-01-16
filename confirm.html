@@ -4,185 +4,235 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>AW Collision — Expense Confirmation</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-:root{--card:#fff;--text:#020617;--border:#e5e7eb;--radius:16px;--shadow:0 30px 80px rgba(0,0,0,.25)}
+:root{
+  --bg:#020617;
+  --card:#ffffff;
+  --text:#020617;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+
+  --approve:#16a34a;
+  --reject:#dc2626;
+  --initial:#f59e0b;
+
+  --radius:16px;
+  --shadow:0 30px 80px rgba(0,0,0,.25);
+}
+
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#020617,#0f172a);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
-.card{width:100%;max-width:720px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.header{padding:22px 28px;background:linear-gradient(90deg,#020617,#7f1d1d);color:#fff;font-weight:800}
-.body{padding:34px}
-.notice{padding:14px;border-radius:12px;background:#fff7ed;color:#92400e;font-weight:600;margin-bottom:18px}
-.notice.error{background:#fef2f2;color:#7f1d1d}
-.table{width:100%;border-collapse:collapse}
-.table td{padding:12px;border-bottom:1px solid var(--border);font-size:14px}
-.table td:first-child{font-weight:700;width:45%}
-.actions{margin-top:26px}
-button{width:100%;padding:16px;border-radius:14px;border:none;font-size:16px;font-weight:800;color:#fff;cursor:pointer}
-button.warn{background:linear-gradient(135deg,#f59e0b,#b45309)}
-button.approve{background:linear-gradient(135deg,#16a34a,#15803d)}
-button.reject{background:linear-gradient(135deg,#dc2626,#991b1b)}
-button + button{margin-top:12px}
-button:disabled{opacity:.7;cursor:not-allowed}
-.webhook-debug{font-size:12px;color:#374151;opacity:.9;margin-top:6px;word-break:break-all}
-.success{display:none;margin-top:20px;padding:16px;background:#ecfdf5;color:#065f46;border-radius:12px;font-weight:800;text-align:center}
-.small{margin-top:8px;font-size:12px;color:#6b7280}
+
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+}
+
+.card{
+  width:100%;
+  max-width:620px;
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+
+.header{
+  padding:22px 28px;
+  background:linear-gradient(90deg,#020617,#7f1d1d);
+  color:#fff;
+  font-weight:800;
+}
+
+.body{
+  padding:34px;
+  color:var(--text);
+}
+
+.notice{
+  background:#fff7ed;
+  color:#92400e;
+  padding:16px;
+  border-radius:12px;
+  font-weight:600;
+  margin-bottom:22px;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:28px;
+}
+
+.table td{
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
+}
+
+.table td:first-child{
+  font-weight:700;
+  color:#374151;
+  width:45%;
+}
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+button{
+  width:100%;
+  padding:16px;
+  border-radius:14px;
+  border:none;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  color:#fff;
+  transition:.2s ease;
+}
+
+button:disabled{
+  opacity:.7;
+  cursor:not-allowed;
+}
+
+.initial{background:linear-gradient(135deg,#fbbf24,#b45309)}
+.approve{background:linear-gradient(135deg,#16a34a,#15803d)}
+.reject{background:linear-gradient(135deg,#dc2626,#991b1b)}
+
+.success{
+  display:none;
+  margin-top:22px;
+  padding:18px;
+  border-radius:14px;
+  background:#ecfdf5;
+  color:#065f46;
+  font-weight:800;
+  text-align:center;
+}
 </style>
 </head>
+
 <body>
+
 <div class="card">
   <div class="header">AW Collision — Expense Confirmation</div>
+
   <div class="body">
-    <div id="notice" class="notice">Please review the expense and choose an action below.</div>
+
+    <div class="notice">
+      Please review the expense details and choose an action below.
+    </div>
+
     <table class="table">
-      <tr><td>Employee Name</td><td id="empName"></td></tr>
-      <tr><td>Expense Amount</td><td>$<span id="amount"></span></td></tr>
-      <tr><td>Expense ID</td><td id="expenseId"></td></tr>
-      <tr><td>Selected Action</td><td id="actionText">—</td></tr>
+      <tr>
+        <td>Employee Name</td>
+        <td id="empName"></td>
+      </tr>
+      <tr>
+        <td>Expense Amount</td>
+        <td>$<span id="amount"></span></td>
+      </tr>
+      <tr>
+        <td>Expense ID</td>
+        <td id="expenseId"></td>
+      </tr>
+      <tr>
+        <td>Selected Action</td>
+        <td id="actionText"></td>
+      </tr>
     </table>
 
     <div class="actions">
-      <button id="initialBtn" class="warn">Initial Approve</button>
-      <div id="initialDebug" class="webhook-debug"></div>
-
+      <button id="initialBtn" class="initial">Initial Approve</button>
       <button id="approveBtn" class="approve">Approve</button>
-      <div id="approveDebug" class="webhook-debug"></div>
-
       <button id="rejectBtn" class="reject">Reject</button>
-      <div id="rejectDebug" class="webhook-debug"></div>
     </div>
 
-    <div class="success" id="successMsg">✅ Action confirmed successfully.</div>
-    <div class="small">If the buttons appear disabled or an error appears, open your link from the email again (it must include the query string).</div>
+    <div class="success" id="successMsg">
+      ✅ Action confirmed successfully.
+    </div>
+
   </div>
 </div>
 
 <script>
-/* tiny helpers (same robust parsing as before) */
-function rawParam(name){
-  const rx = new RegExp('[?&]'+name+'=([^&]*)');
-  const m = window.location.search.match(rx);
-  return m ? m[1] : null;
-}
-function getParam(name){
-  try {
-    const p = new URLSearchParams(window.location.search).get(name);
-    if(p !== null) return p;
-  } catch(e){}
-  return rawParam(name);
-}
-function multiDecode(val, max=4){
-  if(!val) return val;
-  let cur = val;
-  for(let i=0;i<max;i++){
-    try{
-      const dec = decodeURIComponent(cur);
-      if(dec === cur) break;
-      cur = dec;
-    } catch(e){
-      break;
-    }
-  }
-  return cur;
-}
-function normalizeWebhook(paramValue){
-  if(!paramValue) return null;
-  let v = multiDecode(paramValue,5).trim();
-  v = v.replace(/^["']|["']$/g,'');
-  if(/^(https?:\/\/)/i.test(v)){
-    v = v.replace(/^(https?:\/\/)+/i,'https://');
-    try { new URL(v); return v; } catch(e){ return null; }
-  }
-  if(/^\/\//.test(v)){ v = 'https:' + v; try { new URL(v); return v; } catch(e){ return null; } }
-  if(/\w+\.\w+/.test(v)){ v = 'https://' + v; v = v.replace(/^(https?:\/\/)+/i,'https://'); try { new URL(v); return v; } catch(e){ return null; } }
-  return null;
-}
+const params = new URLSearchParams(window.location.search);
 
-/* read params */
-const expenseId = getParam('expense_id');
-const token = getParam('token');
-const name = multiDecode(getParam('name') || '—');
-const amount = multiDecode(getParam('amount') || '0.00');
-const selectedAction = getParam('selected_action');
+const expenseId = params.get("expense_id");
+const token = params.get("token");
+const name = params.get("name") || "";
+const amount = params.get("amount") || "";
+const selectedAction = params.get("selected_action") || "—";
 
-const rawApprove = getParam('approveWebhook');
-const rawReject  = getParam('rejectWebhook');
-const rawInitial = getParam('initialWebhook');
+const approveWebhook = params.get("approveWebhook");
+const rejectWebhook = params.get("rejectWebhook");
+const initialWebhook = params.get("initialWebhook");
 
-const approveWebhook = normalizeWebhook(rawApprove);
-const rejectWebhook  = normalizeWebhook(rawReject);
-const initialWebhook = normalizeWebhook(rawInitial);
+document.getElementById("empName").innerText = name;
+document.getElementById("amount").innerText = amount;
+document.getElementById("expenseId").innerText = expenseId;
+document.getElementById("actionText").innerText = selectedAction.toUpperCase();
 
-/* populate UI */
-document.getElementById('empName').innerText = name;
-document.getElementById('amount').innerText = amount;
-document.getElementById('expenseId').innerText = expenseId || '—';
-if(selectedAction) document.getElementById('actionText').innerText = multiDecode(selectedAction).toUpperCase();
-
-/* debug */
-document.getElementById('approveDebug').innerText = approveWebhook ? 'Resolved webhook: ' + approveWebhook : 'No valid approve webhook found';
-document.getElementById('rejectDebug').innerText = rejectWebhook  ? 'Resolved webhook: ' + rejectWebhook  : 'No valid reject webhook found';
-document.getElementById('initialDebug').innerText = initialWebhook ? 'Resolved webhook: ' + initialWebhook : 'No valid initial webhook found';
-
-const notice = document.getElementById('notice');
-if(!expenseId || !token || !approveWebhook || !rejectWebhook || !initialWebhook){
-  notice.classList.add('error');
-  notice.innerText = 'Invalid approval link. Please open from email that contains the webhook params.';
-  document.querySelectorAll('button').forEach(b => b.disabled = true);
-}
-
-/* POST to netlify forward function (server-side) */
-async function postViaForward(action, targetWebhook, btn){
-  if(!targetWebhook){
-    alert('Webhook not configured properly.');
+async function sendAction(action, webhook) {
+  if (!webhook) {
+    alert("Webhook not configured.");
     return;
   }
-  document.querySelectorAll('button').forEach(b=>b.disabled=true);
-  const orig = btn.innerText;
-  btn.innerText = 'Processing...';
+
+  disableButtons();
 
   try {
-    const res = await fetch('/.netlify/functions/forward', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ webhook: targetWebhook, expense_id: expenseId, action, token })
+    const res = await fetch("/.netlify/functions/forward", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        webhook,
+        payload: {
+          expense_id: expenseId,
+          action,
+          token,
+          name,
+          amount
+        }
+      })
     });
 
-    if(!res.ok){
-      const text = await res.text();
-      console.error('Forward responded', res.status, text);
-      alert('Webhook forward failed: ' + res.status + ' — see console.');
-      document.querySelectorAll('button').forEach(b=>b.disabled=false);
-      btn.innerText = orig;
-      return;
-    }
+    if (!res.ok) throw new Error("Forward failed");
 
-    // success
-    document.getElementById('successMsg').style.display = 'block';
-    btn.innerText = 'Done';
-  } catch(err){
-    console.error('Network/forward error', err);
-    alert('Failed to contact webhook proxy. Check console for details.');
-    document.querySelectorAll('button').forEach(b=>b.disabled=false);
-    btn.innerText = orig;
+    document.getElementById("successMsg").style.display = "block";
+  } catch (err) {
+    alert("Something went wrong. Please try again.");
+    console.error(err);
   }
 }
 
-/* bind */
-const initialBtn = document.getElementById('initialBtn');
-const approveBtn  = document.getElementById('approveBtn');
-const rejectBtn   = document.getElementById('rejectBtn');
+function disableButtons(){
+  document.getElementById("initialBtn").disabled = true;
+  document.getElementById("approveBtn").disabled = true;
+  document.getElementById("rejectBtn").disabled = true;
+}
 
-initialBtn.onclick = () => postViaForward('initial_approve', initialWebhook, initialBtn);
-approveBtn.onclick  = () => postViaForward('approve', approveWebhook, approveBtn);
-rejectBtn.onclick   = () => postViaForward('reject', rejectWebhook, rejectBtn);
+document.getElementById("initialBtn").onclick = () =>
+  sendAction("InitialApprove", initialWebhook);
 
-/* debug console */
-console.log('startup', {
-  expenseId, token, name, amount, selectedAction,
-  rawApprove, rawReject, rawInitial,
-  approveWebhook, rejectWebhook, initialWebhook
-});
+document.getElementById("approveBtn").onclick = () =>
+  sendAction("Approve", approveWebhook);
+
+document.getElementById("rejectBtn").onclick = () =>
+  sendAction("Reject", rejectWebhook);
 </script>
+
 </body>
 </html>
