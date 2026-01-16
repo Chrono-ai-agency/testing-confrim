@@ -1,7 +1,13 @@
 exports.handler = async (event) => {
   try {
-    const body = JSON.parse(event.body || "{}");
-    const { webhook, payload } = body;
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing request body" }),
+      };
+    }
+
+    const { webhook, payload } = JSON.parse(event.body);
 
     if (!webhook) {
       return {
@@ -10,7 +16,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const response = await fetch(`https://${webhook}`, {
+    const response = await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload || {}),
@@ -23,7 +29,10 @@ exports.handler = async (event) => {
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({
+        error: "Forward failed",
+        details: err.message,
+      }),
     };
   }
 };
