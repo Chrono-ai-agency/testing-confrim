@@ -1,295 +1,50 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AW Collision — Upload Invoice</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-start:#071226;
-    --bg-end:#0f172a;
-    --card:#fff;
-    --muted:#6b7280;
-    --accent-1:#f97316;
-    --accent-2:#b91c1c;
-    --success:#16a34a;
-    --danger:#dc2626;
-    --radius:14px;
-    --shadow: 0 30px 80px rgba(2,6,23,.5);
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-    background:linear-gradient(180deg,var(--bg-start),var(--bg-end));
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:28px;
-    color:#0b1220;
-  }
-
-  .container{
-    width:100%;
-    max-width:700px;
-  }
-
-  .card{
-    background:var(--card);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    overflow:hidden;
-  }
-
-  .hero{
-    padding:24px 28px;
-    background:linear-gradient(90deg,#041426,#6b1f1f);
-    color:#fff;
-  }
-  .hero h1{margin:0;font-size:20px;letter-spacing:0.2px}
-  .hero p{margin:6px 0 0;opacity:.9;font-size:13px}
-
-  .body{
-    padding:28px;
-  }
-
-  .row{
-    display:flex;
-    gap:16px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-
-  .left{
-    flex:1 1 240px;
-  }
-
-  .meta{
-    font-size:14px;color:var(--muted);margin-bottom:10px;
-  }
-
-  /* custom file picker */
-  .file-picker{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    background:#f8fafc;
-    border:1px dashed #e6eef7;
-    padding:14px;
-    border-radius:10px;
-  }
-  .file-button{
-    display:inline-block;
-    padding:10px 14px;
-    background:linear-gradient(135deg,var(--success),#15803d);
-    color:#fff;
-    border-radius:10px;
-    font-weight:700;
-    cursor:pointer;
-    border:none;
-    font-size:14px;
-  }
-  .file-button[disabled]{opacity:.6;cursor:not-allowed}
-
-  .file-input{ display:none; }
-
-  .file-list{
-    margin-top:12px;
-    font-size:14px;
-    color:#0b1220;
-  }
-  .file-item{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    padding:8px 10px;
-    border-radius:8px;
-    background:#fff;
-    border:1px solid #f1f5f9;
-    margin-bottom:8px;
-    box-shadow:0 1px 0 rgba(2,6,23,.02);
-  }
-  .file-name{max-width:70%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .file-size{color:var(--muted);font-size:13px}
-
-  /* action button */
-  .actions{
-    margin-top:18px;
-  }
-  .submit-btn{
-    width:100%;
-    padding:14px;
-    border-radius:10px;
-    border:none;
-    background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
-    color:#fff;
-    font-weight:800;
-    font-size:16px;
-    cursor:pointer;
-  }
-  .submit-btn[disabled]{opacity:.7;cursor:not-allowed}
-
-  .helper{
-    margin-top:12px;font-size:13px;color:var(--muted)
-  }
-
-  .notice{
-    margin-top:14px;
-    padding:12px 14px;
-    border-radius:10px;
-    display:flex;
-    gap:12px;
-    align-items:center;
-    font-weight:700;
-  }
-  .notice.success{
-    background:#ecfdf5;color:#065f46;border:1px solid #d1fae5;
-  }
-  .notice.error{
-    background:#fff1f2;color:#7f1d1d;border:1px solid #fee2e2;
-  }
-
-  /* small responsive tweak */
-  @media (max-width:520px){
-    .body{padding:18px}
-    .hero{padding:16px}
-  }
-</style>
-</head>
-<body>
-  <div class="container">
-    <div class="card">
-      <div class="hero">
-        <h1>AW Collision — Upload Invoice</h1>
-        <p>Submit receipts or invoices for final expense approval.</p>
-      </div>
-
-      <div class="body">
-        <div class="meta">Expense ID: <strong id="expenseIdText">—</strong></div>
-
-        <div class="file-picker" role="group" aria-label="File upload controls">
-          <label class="file-button" id="chooseBtn" for="filesInput">Choose files</label>
-          <span style="color:var(--muted);font-size:14px">or drag & drop here</span>
-          <input id="filesInput" class="file-input" type="file" multiple />
-        </div>
-
-        <div id="fileList" class="file-list" aria-live="polite" style="margin-top:12px"></div>
-
-        <div class="actions">
-          <button id="submitBtn" class="submit-btn">Submit invoice(s)</button>
-        </div>
-
-        <div id="helper" class="helper">Accepted: PDF, JPG, PNG, DOCX. Max ~10 MB per file.</div>
-
-        <div id="result" style="display:none"></div>
-      </div>
-    </div>
-  </div>
-
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const expenseId = params.get('expense_id') || '';
-  const token = params.get('token') || '';
-  document.getElementById('expenseIdText').innerText = expenseId || '—';
+const params = new URLSearchParams(window.location.search);
+const expenseId = params.get('expense_id');
+const token = params.get('token');
 
-  const filesInput = document.getElementById('filesInput');
-  const chooseBtn = document.getElementById('chooseBtn');
-  const fileListEl = document.getElementById('fileList');
-  const submitBtn = document.getElementById('submitBtn');
-  const resultEl = document.getElementById('result');
+const btn = document.getElementById('submitBtn');
+const fileInput = document.getElementById('files');
 
-  // show chosen files
-  function renderFileList(files){
-    fileListEl.innerHTML = '';
-    const arr = Array.from(files || []);
-    if(!arr.length){
-      fileListEl.innerHTML = '<div style="color:var(--muted)">No files selected</div>';
-      return;
-    }
-    arr.forEach(f => {
-      const el = document.createElement('div');
-      el.className = 'file-item';
-      const name = document.createElement('div');
-      name.className = 'file-name';
-      name.title = f.name;
-      name.textContent = f.name;
-      const size = document.createElement('div');
-      size.className = 'file-size';
-      size.textContent = Math.round(f.size/1024) + ' KB';
-      el.appendChild(name);
-      el.appendChild(size);
-      fileListEl.appendChild(el);
-    });
+btn.onclick = async () => {
+  if (!expenseId || !token) {
+    alert('Invalid or expired link.');
+    return;
   }
 
-  // initial empty
-  renderFileList([]);
+  if (!fileInput.files.length) {
+    alert('Please select at least one file.');
+    return;
+  }
 
-  // clicking label opens input
-  chooseBtn.addEventListener('click', e => {
-    filesInput.click();
-  });
+  btn.disabled = true;
+  btn.innerText = 'Uploading...';
 
-  // drag & drop
-  const picker = document.querySelector('.file-picker');
-  picker.addEventListener('dragover', e => { e.preventDefault(); picker.style.borderColor='#c7e0ff'; });
-  picker.addEventListener('dragleave', e => { e.preventDefault(); picker.style.borderColor=''; });
-  picker.addEventListener('drop', e => {
-    e.preventDefault();
-    picker.style.borderColor='';
-    if(e.dataTransfer && e.dataTransfer.files) {
-      filesInput.files = e.dataTransfer.files; // assign
-      renderFileList(filesInput.files);
-    }
-  });
+  const formData = new FormData();
+  formData.append('expense_id', expenseId);
+  formData.append('token', token);
 
-  filesInput.addEventListener('change', () => renderFileList(filesInput.files));
+  for (const file of fileInput.files) {
+    formData.append('files', file);
+  }
 
-  // submit
-  submitBtn.addEventListener('click', async () => {
-    if(!expenseId){
-      alert('Invalid link (missing expense id). Please open the link from the email.');
-      return;
-    }
-    if(!filesInput.files.length){
-      alert('Please select at least one file.');
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Uploading...';
-
-    const form = new FormData();
-    form.append('expense_id', expenseId);
-    form.append('token', token);
-    for(const f of filesInput.files) form.append('files', f);
-
-    try {
-      const res = await fetch('/.netlify/functions/uploadForward', { method:'POST', body: form });
-      if(!res.ok){
-        let bodyText = '';
-        try{ bodyText = await res.text(); }catch(e){/*ignore*/ }
-        throw new Error('Upload failed' + (bodyText?': '+bodyText:''));
+  try {
+    const res = await fetch(
+      'https://aawcr1400.app.n8n.cloud/webhook/invoice-upload',
+      {
+        method: 'POST',
+        body: formData
       }
+    );
 
-      // show success notice
-      resultEl.style.display = 'block';
-      resultEl.innerHTML = '<div class="notice success">✅ Files uploaded successfully. Thank you.</div>';
-      // clear input & file list
-      filesInput.value = '';
-      renderFileList([]);
-      submitBtn.textContent = 'Done';
-    } catch(err){
-      console.error('Upload error', err);
-      resultEl.style.display = 'block';
-      resultEl.innerHTML = '<div class="notice error">⚠️ Upload failed. Please try again or contact support.</div>';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit invoice(s)';
-    }
-  });
+    if (!res.ok) throw new Error('Upload failed');
+
+    document.getElementById('successMsg').style.display = 'block';
+    btn.innerText = 'Done';
+  } catch (e) {
+    alert('Upload failed. Please try again.');
+    btn.disabled = false;
+    btn.innerText = 'Submit Invoices';
+  }
+};
 </script>
-</body>
-</html>
