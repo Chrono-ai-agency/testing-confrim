@@ -1,57 +1,119 @@
-<!-- upload.html (client-side direct to n8n) -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload Invoice — AW Collision</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>/* your styles (same as you used) */</style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AW Collision — Upload Invoice</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:Inter,Arial,sans-serif;
+  background:linear-gradient(180deg,#020617,#0f172a);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+}
+.card{
+  background:#fff;
+  max-width:520px;
+  width:100%;
+  border-radius:16px;
+  box-shadow:0 30px 80px rgba(0,0,0,.25);
+  padding:32px;
+}
+h1{margin:0 0 12px}
+p{color:#374151;font-size:14px}
+input[type=file]{
+  width:100%;
+  margin-top:16px;
+}
+button{
+  margin-top:20px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:#fff;
+  font-weight:800;
+  font-size:16px;
+  cursor:pointer;
+}
+button:disabled{opacity:.7}
+.success{
+  display:none;
+  margin-top:16px;
+  padding:14px;
+  background:#ecfdf5;
+  color:#065f46;
+  border-radius:12px;
+  font-weight:700;
+  text-align:center;
+}
+</style>
 </head>
+
 <body>
 <div class="card">
   <h1>Upload Invoice</h1>
-  <p>Expense ID: <strong id="expenseId"></strong></p>
-  <input type="file" id="files" multiple />
-  <button id="submitBtn">Submit Invoice</button>
-  <div class="success" id="successMsg" style="display:none">✅ Invoice submitted successfully.</div>
+  <p>Please upload your receipt or invoice for this expense.</p>
+
+  <input id="files" type="file" multiple />
+
+  <button id="submitBtn">Submit Invoices</button>
+
+  <div class="success" id="successMsg">
+    ✅ Files uploaded successfully.
+  </div>
 </div>
 
 <script>
 const params = new URLSearchParams(window.location.search);
 const expenseId = params.get('expense_id');
 const token = params.get('token');
-document.getElementById('expenseId').innerText = expenseId || '—';
 
 const btn = document.getElementById('submitBtn');
-btn.onclick = async () => {
-  const files = document.getElementById('files').files;
-  if (!files.length) { alert('Please upload at least one file.'); return; }
+const fileInput = document.getElementById('files');
 
-  const formData = new FormData();
-  formData.append('expense_id', expenseId);
-  formData.append('token', token);
-  for (const f of files) formData.append('files', f);
+btn.onclick = async () => {
+  if(!expenseId){
+    alert('Invalid link.');
+    return;
+  }
+  if(!fileInput.files.length){
+    alert('Please select at least one file.');
+    return;
+  }
 
   btn.disabled = true;
   btn.innerText = 'Uploading...';
 
-  try {
-    // <-- Direct to n8n webhook (no Netlify function)
-    const res = await fetch('https://aawcr1400.app.n8n.cloud/webhook/invoice-upload', {
-      method: 'POST',
-      body: formData
-    });
+  const formData = new FormData();
+  formData.append('expense_id', expenseId);
+  formData.append('token', token);
+  for(const f of fileInput.files){
+    formData.append('files', f);
+  }
 
-    if (!res.ok) throw new Error('Upload failed: ' + res.status);
-    document.getElementById('successMsg').style.display = 'block';
-    btn.innerText = 'Done';
-  } catch (err) {
-    console.error('Upload error:', err);
+  const res = await fetch('/.netlify/functions/uploadForward', {
+    method:'POST',
+    body: formData
+  });
+
+  if(!res.ok){
     alert('Upload failed. Please try again.');
     btn.disabled = false;
-    btn.innerText = 'Submit Invoice';
+    btn.innerText = 'Submit Invoices';
+    return;
   }
+
+  document.getElementById('successMsg').style.display = 'block';
+  btn.innerText = 'Done';
 };
 </script>
 </body>
