@@ -1,48 +1,58 @@
+<!-- upload.html (client-side direct to n8n) -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload Invoice — AW Collision</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>/* your styles (same as you used) */</style>
+</head>
+<body>
+<div class="card">
+  <h1>Upload Invoice</h1>
+  <p>Expense ID: <strong id="expenseId"></strong></p>
+  <input type="file" id="files" multiple />
+  <button id="submitBtn">Submit Invoice</button>
+  <div class="success" id="successMsg" style="display:none">✅ Invoice submitted successfully.</div>
+</div>
+
 <script>
 const params = new URLSearchParams(window.location.search);
 const expenseId = params.get('expense_id');
 const token = params.get('token');
-
 document.getElementById('expenseId').innerText = expenseId || '—';
 
 const btn = document.getElementById('submitBtn');
-
 btn.onclick = async () => {
   const files = document.getElementById('files').files;
-
-  if (!files.length) {
-    alert('Please upload at least one file.');
-    return;
-  }
+  if (!files.length) { alert('Please upload at least one file.'); return; }
 
   const formData = new FormData();
   formData.append('expense_id', expenseId);
   formData.append('token', token);
-
-  for (const f of files) {
-    formData.append('files', f);
-  }
+  for (const f of files) formData.append('files', f);
 
   btn.disabled = true;
   btn.innerText = 'Uploading...';
 
   try {
-    const res = await fetch(
-      'https://aawcr1400.app.n8n.cloud/webhook/invoice-upload',
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
+    // <-- Direct to n8n webhook (no Netlify function)
+    const res = await fetch('https://aawcr1400.app.n8n.cloud/webhook/invoice-upload', {
+      method: 'POST',
+      body: formData
+    });
 
-    if (!res.ok) throw new Error('Upload failed');
-
+    if (!res.ok) throw new Error('Upload failed: ' + res.status);
     document.getElementById('successMsg').style.display = 'block';
     btn.innerText = 'Done';
-  } catch (e) {
+  } catch (err) {
+    console.error('Upload error:', err);
     alert('Upload failed. Please try again.');
     btn.disabled = false;
     btn.innerText = 'Submit Invoice';
   }
 };
 </script>
+</body>
+</html>
