@@ -1,0 +1,9 @@
+{
+  "name": "testing-confirm",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "formidable": "^2.1.1"
+  },
+  "type": "module"
+}
