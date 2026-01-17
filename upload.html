@@ -1,76 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload Invoice — AW Collision</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-<style>
-body{
-  margin:0;
-  font-family:Inter,Arial,sans-serif;
-  background:linear-gradient(180deg,#020617,#0f172a);
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-.card{
-  background:#fff;
-  width:100%;
-  max-width:520px;
-  border-radius:14px;
-  padding:28px;
-  box-shadow:0 30px 80px rgba(0,0,0,.25);
-}
-h1{margin:0 0 8px;font-size:22px}
-p{font-size:14px;color:#374151}
-input[type=file]{
-  margin-top:14px;
-  width:100%;
-}
-button{
-  margin-top:18px;
-  width:100%;
-  padding:14px;
-  background:#16a34a;
-  color:#fff;
-  font-size:16px;
-  font-weight:700;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-}
-button:disabled{opacity:.7}
-.success{
-  display:none;
-  margin-top:16px;
-  background:#ecfdf5;
-  color:#065f46;
-  padding:14px;
-  border-radius:10px;
-  font-weight:700;
-}
-</style>
-</head>
-
-<body>
-<div class="card">
-  <h1>Upload Invoice</h1>
-  <p>Expense ID: <strong id="expenseId"></strong></p>
-
-  <input type="file" id="files" multiple />
-
-  <button id="submitBtn">Submit Invoice</button>
-
-  <div class="success" id="successMsg">
-    ✅ Invoice submitted successfully.
-  </div>
-</div>
-
 <script>
 const params = new URLSearchParams(window.location.search);
 const expenseId = params.get('expense_id');
@@ -82,7 +9,8 @@ const btn = document.getElementById('submitBtn');
 
 btn.onclick = async () => {
   const files = document.getElementById('files').files;
-  if(!files.length){
+
+  if (!files.length) {
     alert('Please upload at least one file.');
     return;
   }
@@ -91,27 +19,30 @@ btn.onclick = async () => {
   formData.append('expense_id', expenseId);
   formData.append('token', token);
 
-  for(const f of files){
+  for (const f of files) {
     formData.append('files', f);
   }
 
   btn.disabled = true;
   btn.innerText = 'Uploading...';
 
-  const res = await fetch('/.netlify/functions/uploadForward', {
-    method:'POST',
-    body: formData
-  });
+  try {
+    const res = await fetch(
+      'https://aawcr1400.app.n8n.cloud/webhook/invoice-upload',
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
 
-  if(res.ok){
-    document.getElementById('successMsg').style.display='block';
+    if (!res.ok) throw new Error('Upload failed');
+
+    document.getElementById('successMsg').style.display = 'block';
     btn.innerText = 'Done';
-  } else {
+  } catch (e) {
     alert('Upload failed. Please try again.');
-    btn.disabled=false;
-    btn.innerText='Submit Invoice';
+    btn.disabled = false;
+    btn.innerText = 'Submit Invoice';
   }
 };
 </script>
-</body>
-</html>
