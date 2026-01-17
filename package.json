@@ -1,8 +1,10 @@
 {
   "name": "testing-confirm",
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
   "dependencies": {
-    "formidable": "^3.5.2"
+    "formidable": "^3.0.0",
+    "node-fetch": "^2.6.7"
   }
 }
+
