@@ -1,50 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AW Collision — Upload Invoice</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg1:#020617;
+    --bg2:#0f172a;
+    --card:#fff;
+    --accent1:#7f1d1d;
+    --accent2:#b45309;
+    --ok:#16a34a;
+    --muted:#6b7280;
+    --radius:14px;
+  }
+  html,body{height:100%;margin:0}
+  body{
+    font-family:Inter, Arial, sans-serif;
+    background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    display:flex;align-items:center;justify-content:center;padding:32px;
+    color:#0b1220;
+  }
+  .card{
+    width:100%;max-width:720px;background:var(--card);border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.3);
+  }
+  .card .head{
+    padding:28px 32px;background:linear-gradient(90deg,var(--bg1),var(--accent1));
+    color:#fff;font-weight:800;font-size:20px;
+  }
+  .card .body{padding:28px 32px}
+  .meta{color:var(--muted);margin-bottom:16px}
+  .meta strong{color:#111}
+  .drop{
+    border:2px dashed #e6e9ee;border-radius:12px;padding:18px;display:flex;align-items:center;gap:14px;
+    background:linear-gradient(180deg,#fbfeff,#fff);cursor:pointer;
+  }
+  .choose{
+    padding:10px 16px;border-radius:8px;background:linear-gradient(135deg,#10b981,#15803d);color:#fff;font-weight:700;
+  }
+  .file-list{margin-top:16px}
+  .file-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;background:#fafafa;margin-top:8px}
+  .file-name{color:#111}
+  .file-size{color:var(--muted);font-size:13px}
+  .submit{
+    margin-top:20px;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#d97706,#b91c1c);
+    color:#fff;font-weight:800;font-size:16px;width:100%;cursor:pointer;
+  }
+  .submit:disabled{opacity:.7;cursor:not-allowed}
+  .hint{margin-top:10px;color:var(--muted);font-size:13px}
+  .msg{margin-top:16px;padding:12px;border-radius:10px;display:none}
+  .msg.success{background:#ecfdf5;color:#065f46}
+  .msg.error{background:#fff1f2;color:#7f1d1d}
+  .small{font-size:13px;color:var(--muted);margin-top:6px}
+  /* responsive */
+  @media (max-width:640px){ .card{margin:12px} }
+</style>
+</head>
+<body>
+  <div class="card" role="main">
+    <div class="head">AW Collision — Upload Invoice</div>
+    <div class="body">
+      <div class="meta">Submit receipts or invoices for final expense approval.</div>
+
+      <div class="meta">Expense ID: <strong id="expenseId">—</strong></div>
+
+      <label id="dropArea" class="drop" tabindex="0">
+        <span class="choose">Choose files</span>
+        <span class="small">or drag &amp; drop here</span>
+        <input id="fileInput" type="file" multiple style="display:none" />
+      </label>
+
+      <div class="file-list" id="fileList"></div>
+
+      <button id="submitBtn" class="submit">Submit invoice(s)</button>
+
+      <div class="hint">Accepted: any file type. For large uploads, the browser sends directly to n8n.</div>
+
+      <div id="successMsg" class="msg success">✅ Files uploaded successfully.</div>
+      <div id="errorMsg" class="msg error">⚠️ Upload failed. Please try again.</div>
+    </div>
+  </div>
+
 <script>
-const params = new URLSearchParams(window.location.search);
-const expenseId = params.get('expense_id');
-const token = params.get('token');
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const expenseId = params.get('expense_id') || '';
+  const token = params.get('token') || '';
 
-const btn = document.getElementById('submitBtn');
-const fileInput = document.getElementById('files');
+  const drop = document.getElementById('dropArea');
+  const input = document.getElementById('fileInput');
+  const list = document.getElementById('fileList');
+  const submit = document.getElementById('submitBtn');
+  const successMsg = document.getElementById('successMsg');
+  const errorMsg = document.getElementById('errorMsg');
+  const expenseEl = document.getElementById('expenseId');
 
-btn.onclick = async () => {
-  if (!expenseId || !token) {
-    alert('Invalid or expired link.');
-    return;
+  expenseEl.innerText = expenseId || '—';
+
+  let files = [];
+
+  function readableSize(n){
+    if(n < 1024) return n + ' B';
+    if(n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+    return (n/(1024*1024)).toFixed(1) + ' MB';
   }
 
-  if (!fileInput.files.length) {
-    alert('Please select at least one file.');
-    return;
+  function renderList(){
+    list.innerHTML = '';
+    files.forEach((f, i) => {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.innerHTML = `<div class="file-name">${escapeHtml(f.name)}</div><div class="file-size">${readableSize(f.size)}</div>`;
+      list.appendChild(row);
+    });
   }
 
-  btn.disabled = true;
-  btn.innerText = 'Uploading...';
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
-  const formData = new FormData();
-  formData.append('expense_id', expenseId);
-  formData.append('token', token);
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => {
+    files = Array.from(e.target.files);
+    renderList();
+  });
 
-  for (const file of fileInput.files) {
-    formData.append('files', file);
-  }
+  // drag & drop
+  ['dragenter','dragover'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#cbd5e1'; });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.style.borderColor=''; });
+  });
+  drop.addEventListener('drop', e => {
+    const dt = e.dataTransfer;
+    if(dt && dt.files && dt.files.length){
+      files = Array.from(dt.files);
+      renderList();
+    }
+  });
 
-  try {
-    const res = await fetch(
-      'https://aawcr1400.app.n8n.cloud/webhook/invoice-upload',
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
+  submit.addEventListener('click', async () => {
+    successMsg.style.display='none';
+    errorMsg.style.display='none';
 
-    if (!res.ok) throw new Error('Upload failed');
+    if(!expenseId || !token){ alert('Invalid link.'); return; }
+    if(!files.length){ alert('Please select at least one file.'); return; }
 
-    document.getElementById('successMsg').style.display = 'block';
-    btn.innerText = 'Done';
-  } catch (e) {
-    alert('Upload failed. Please try again.');
-    btn.disabled = false;
-    btn.innerText = 'Submit Invoices';
-  }
-};
+    submit.disabled = true;
+    submit.innerText = 'Uploading...';
+
+    const form = new FormData();
+    form.append('expense_id', expenseId);
+    form.append('token', token);
+    for(const f of files) form.append('files', f);
+
+    try {
+      // POST straight to n8n production webhook (accepts multipart/form-data)
+      const WEBHOOK = 'https://aawcr1400.app.n8n.cloud/webhook/invoice-upload';
+      const res = await fetch(WEBHOOK, { method: 'POST', body: form });
+
+      if(!res.ok) throw new Error('upload failed ' + res.status);
+      successMsg.style.display='block';
+      submit.innerText = 'Done';
+    } catch(err) {
+      console.error('Upload error', err);
+      errorMsg.style.display='block';
+      submit.disabled = false;
+      submit.innerText = 'Submit invoice(s)';
+    }
+  });
+
+  // keyboard accessibility
+  drop.addEventListener('keydown', e => { if(e.key === 'Enter') input.click(); });
+
+})();
 </script>
+</body>
+</html>
